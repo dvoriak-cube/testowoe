@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Database\Seeder;
-use App\Article;
 use App\User;
+use App\ArticleLike;
 
-class ArticlesTableSeeder extends Seeder
+class ArticleLikeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -13,17 +13,14 @@ class ArticlesTableSeeder extends Seeder
      */
     public function run()
     {
-        //Article::truncate();
-
         $faker = \Faker\Factory::create();
+
         $users = User::all()->pluck('id')->toArray();
 
-        for ($i = 0; $i < 50; $i++) {
-            Article::create([
-                'title' => $faker->sentence,
-                'body' => $faker->paragraph,
-                'category' => $faker->word,
+        for ($i = 0; $i < 10; $i++) {
+            ArticleLike::create([
                 'user_id' => $faker->randomElement($users),
+                'article_id' => $faker->randomElement($users),
             ]);
         }
     }

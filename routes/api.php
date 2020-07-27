@@ -25,9 +25,12 @@ Route::post('register', 'UserController@register');
 
 Route::group(['middleware' => 'auth:api'], function(){
     Route::post('details', 'UserController@details');
+    Route::post('logout', 'UserController@logout');
     
     Route::get('articles', 'ArticleController@index');
     Route::get('articles/{article}', 'ArticleController@show');
+    Route::get('articles/byuser/{id}', 'ArticleController@users_posts');
+    Route::get('articles/bycategory/{category}', 'ArticleController@ctgry_posts');
     Route::post('articles', 'ArticleController@store');
     Route::put('articles/{article}', 'ArticleController@update');
     Route::delete('articles/{article}', 'ArticleController@delete');

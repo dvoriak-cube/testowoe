@@ -13,4 +13,8 @@ class Article extends Model
     {
         return $this->belongsTo('App\User');
     }
+    public function article_like()
+    {
+        return $this->hasMany('App\ArticleLike');
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Article;
+use App\User;
 
 class ArticleController extends Controller
 {
@@ -37,5 +38,20 @@ class ArticleController extends Controller
         $article->delete();
 
         return response()->json(null, 204);
+    }
+    
+    public function users_posts($id)
+    {
+        $user = User::find($id);
+        $articles = $user->articles()->paginate(10);
+
+        return response()->json($articles, 200);
+    }
+    
+    public function ctgry_posts($category)
+    {
+        $articles = Article::where('category', '=', $category)->paginate(10);
+
+        return response()->json($articles, 200);
     }
 }

@@ -42,4 +42,13 @@ class User extends Authenticatable
     public function articles() {
         return $this->hasMany('App\Article');
     }
+
+    public function article_likes()
+    {
+        $this->hasMany('App\ArticleLike');
+    }
+    
+    public function AauthAcessToken(){
+        return $this->hasMany('\App\OauthAccessToken');
+    }
 }
