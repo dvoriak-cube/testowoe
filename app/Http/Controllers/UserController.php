@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\User;
+use App\OauthAccessToken;
 use Illuminate\Http\Request;
-use App\User; 
 use Illuminate\Support\Facades\Auth; 
-use Validator;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -16,14 +19,33 @@ class UserController extends Controller
      * 
      * @return \Illuminate\Http\Response 
      */ 
-    public function login(){ 
+    public function login(Request $request){
+        
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails())
+        {
+        return response(['errors'=>$validator->errors()->all()], 422);
+        }
+        
         if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
-            $user = Auth::user(); 
-            $success['token'] =  $user->createToken('MyApp')-> accessToken; 
-            return response()->json(['success' => $success], $this-> successStatus); 
+            $user = Auth::user();
+            $userid = Auth::id();
+            $token = OauthAccessToken::where('user_id', $userid)->where('revoked', 0)->first();
+            if(empty($token)){
+                $success['token'] = $user->createToken('Laravel Password Grant Client')->accessToken;
+                return response(['success' => $success], $this-> successStatus);
+            }
+            else{    
+                $success['token'] = $token->id;
+                return response(['Already logged in' => $success], $this-> successStatus);
+            }
         } 
         else{ 
-            return response()->json(['error'=>'Unauthorised'], 401); 
+            return response(['error'=>'Unauthorised'], 401); 
         } 
     }
     
@@ -36,19 +58,21 @@ class UserController extends Controller
     { 
         $validator = Validator::make($request->all(), [ 
             'name' => 'required', 
-            'email' => 'required|email', 
+            'email' => 'required|email|unique:users', 
             'password' => 'required', 
             'c_password' => 'required|same:password', 
         ]);
         if ($validator->fails()) { 
-            return response()->json(['error'=>$validator->errors()], 401);            
+            return response(['errors'=>$validator->errors()->all()], 422); 
         }
         $input = $request->all(); 
-        $input['password'] = bcrypt($input['password']); 
+        $input['password'] = bcrypt($input['password']);
+        $input['remember_token'] = Str::random(10); 
         $user = User::create($input); 
-        $success['token'] =  $user->createToken('MyApp')-> accessToken; 
+        $token = $user->createToken('Laravel Password Grant Client')->accessToken;
+        $success['token'] =  $token; 
         $success['name'] =  $user->name;
-        return response()->json(['success'=>$success], $this-> successStatus); 
+        return response(['success'=>$success], $this-> successStatus); 
     }
     
     /** 
@@ -58,8 +82,13 @@ class UserController extends Controller
      */ 
     public function details() 
     { 
+        if(Auth::check()){
         $user = Auth::user(); 
-        return response()->json(['success' => $user], $this-> successStatus); 
+        return response(['success' => $user], $this-> successStatus);
+        }
+        else{
+            return response(['error'=>'Unauthorised'], 401);
+        } 
     } 
 
     /** 
@@ -67,10 +96,11 @@ class UserController extends Controller
      * 
      * @return \Illuminate\Http\Response 
      */ 
-    public function logout()
+    public function logout(Request $request)
     {
-        if (Auth::check()) {
-            Auth::user()->AauthAcessToken()->delete();
-        }
+        $token = $request->user()->token();
+        $token->revoke();
+        $response = ['message' => 'You have been successfully logged out!'];
+        return response($response, 200);
     }
 }

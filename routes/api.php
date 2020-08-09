@@ -15,23 +15,26 @@ use App\Article;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-
-Route::post('login', 'UserController@login');
-Route::post('register', 'UserController@register');
-
-Route::group(['middleware' => 'auth:api'], function(){
-    Route::post('details', 'UserController@details');
-    Route::post('logout', 'UserController@logout');
+Route::group(['middleware' => ['cors', 'json.response']], function () {
+    
+    Route::post('login', 'UserController@login');
+    Route::post('register', 'UserController@register');
     
     Route::get('articles', 'ArticleController@index');
     Route::get('articles/{article}', 'ArticleController@show');
     Route::get('articles/byuser/{id}', 'ArticleController@users_posts');
     Route::get('articles/bycategory/{category}', 'ArticleController@ctgry_posts');
-    Route::post('articles', 'ArticleController@store');
-    Route::put('articles/{article}', 'ArticleController@update');
-    Route::delete('articles/{article}', 'ArticleController@delete');
+
+    Route::middleware('auth:api')->group(function () {
+        Route::post('logout', 'UserController@logout');
+        Route::get('details', 'UserController@details');
+        Route::get('articles/favorites/{id}', 'ArticleController@fvrite_posts');
+        Route::post('articles', 'ArticleController@store');
+        Route::put('articles/{article}', 'ArticleController@update');
+        Route::delete('articles/{article}', 'ArticleController@delete');
+
+        Route::post('articlelike', 'ArticleLikeController@create');
+        Route::delete('articlelike/{id}', 'ArticleLikeController@destroy');
+    });
+
 });
